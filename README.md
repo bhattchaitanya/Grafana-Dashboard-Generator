@@ -61,3 +61,6 @@ Dashboard file successfully generated /var/tmp/AuthIDService.jason
 
 **_Once the file is generated, launch grafana (like: localhost:<blahPort>/Grafana/) and click the "Import" button in the Dashboard dropdown. Select the generated JSON file and enjoy!!_**
 
+![image](https://cloud.githubusercontent.com/assets/7585681/7100497/f79678b8-dfd9-11e4-8a29-7da4ad7e814a.png)
+
+![image](https://cloud.githubusercontent.com/assets/7585681/7100648/98c52d44-dfe2-11e4-9eb9-56a39026131f.png)

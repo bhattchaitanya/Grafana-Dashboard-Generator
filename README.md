@@ -17,7 +17,7 @@ This app lets you automatically generate cumulative metrics and individual metri
 1. Download the GenerateDashboard.jar file<br>
 2. Copy it into any directory.<br>
 
-**Run the command as following:**<br>
+**Run the command as shown in the example:**<br>
 `java -jar GenerateDashboard.jar`<br>
 `1.Enter a name for the Grafana dashboard:`<br>
 AuthIDService<br>

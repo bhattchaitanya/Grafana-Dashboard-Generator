@@ -271,7 +271,7 @@ public class GenerateDashboard {
 		try {
 			
 			
-			String outputFile = outputFilePath + outputFileName + ".jason";
+			String outputFile = outputFilePath + outputFileName + ".json";
 
 			writer = new PrintWriter(outputFile, "UTF-8");
 			writer.println(jason);

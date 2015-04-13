@@ -60,8 +60,7 @@ The dashboard will contain the following transactions<br>
 Dashboard file successfully generated /var/tmp/AuthIDService.jason
 
 **_Once the file is generated, launch grafana (like: localhost:<blahPort>/Grafana/) and click the "Import" button in the Dashboard dropdown. Select the generated JSON file and enjoy!!_**
+![image](https://cloud.githubusercontent.com/assets/7585681/7110874/5a74204a-e16d-11e4-883b-8e7f0e5d8456.png)
 
-![image](https://cloud.githubusercontent.com/assets/7585681/7100497/f79678b8-dfd9-11e4-8a29-7da4ad7e814a.png)
-
-This is the generated Grafana dashboard:
-![image](https://cloud.githubusercontent.com/assets/7585681/7100648/98c52d44-dfe2-11e4-9eb9-56a39026131f.png)
+This is an auto generated Grafana dashboard using this tool:
+![image](https://cloud.githubusercontent.com/assets/7585681/7110890/917f3ebc-e16d-11e4-8ff1-1d49fd7e8018.png)

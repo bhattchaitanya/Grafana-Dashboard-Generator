@@ -9,28 +9,125 @@ import java.util.Scanner;
 
 
 public class GenerateDashboard {
+
 	public static void main(String[] args) {
 
 		List<String> metrics = new ArrayList<String>();
 
 		System.out.println("1.Enter a name for the Grafana dashboard:");
-		Scanner outputFileNameScanner = new Scanner(System.in);
-		String outputFileName = outputFileNameScanner.nextLine();
+		Scanner outputFileNameScanner = new Scanner(System.in);;
+		String outputFileName = "";
+		boolean isValidFile = false;
+		while((outputFileName.isEmpty()) || (isValidFile == false)){
+			outputFileName = outputFileNameScanner.nextLine();
+			if(outputFileName.isEmpty()){
+				System.out.println("Dashboard name cannot be empty!\n");
+				continue;
+			}else{
+				isValidFile = outputFileName.matches("[a-zA-Z0-9]*");
+			}
+			if(!isValidFile){
+				System.out.println("Illegal file name. Special Characters cannot be used!\n");
+				continue;
+			}
+			
+		}
 
+		
 		System.out.println("2.Enter output file path (Example: /var/tmp/ on Linux OR like C:\\tmp\\output\\ on Windows):");
 		Scanner outputFilePathScanner = new Scanner(System.in);
-		String outputFilePath = outputFilePathScanner.nextLine();
+		String outputFilePath = "";
+		boolean isValidPath = false;
+		while((outputFilePath.isEmpty()) || (isValidPath==false)){
+			outputFilePath = outputFilePathScanner.nextLine();
+				if(outputFilePath.isEmpty()){
+					System.out.println("Output path cannot be empty!");
+					continue;
+				}
+				if(!outputFilePath.isEmpty()){
+					if(!(new File(outputFilePath).isDirectory())){
+						System.out.println("Invalid directory! Enter a valid output path.");
+					}else{
+						isValidPath = true;
+					}//end of inner if
+				}//end of outer if
+		}//end of while
+		if(!outputFilePath.endsWith("/")){
+			outputFilePath += "/" ;
+		}
+		
+		
+		System.out.println("3.Enter path of script(Example: /var/tmp/test.jmx in Linux OR like C:\\tmp\\test.jmx in Windows):");
+		Scanner scriptFileScanner = new Scanner(System.in);
+		String scriptPath = "";
+		boolean isValidScriptPath = false;
+		while((outputFilePath.isEmpty()) || (isValidScriptPath==false)){
+			scriptPath = outputFilePathScanner.nextLine();
+				if(scriptPath.isEmpty()){
+					System.out.println("Script path cannot be empty!");
+					continue;
+				}
+				if(!scriptPath.isEmpty()){
+					if(!(new File(scriptPath).isFile())){
+						System.out.println("Invalid script file! Enter a valid script path.");
+						continue;
+					}else{
+						isValidScriptPath = true;
+					}//end of inner if
+				}//end of outer if
+				if(!scriptPath.endsWith(".jmx")){
+						System.out.println("Invalid script file! Enter a valid script path. Note:Path should contain the file!");
+						isValidScriptPath = false;
+						continue;
+				}//end of outer if
+		}//end of while
 
-		System.out.println("3.Enter path of script(example: /var/tmp/test.jmx in Linux OR like C:\\tmp\\test.jmx in Windows):");
-		Scanner fileScan = new Scanner(System.in);
+		
+		System.out.println("Do you want to use the default rootPrefix value? (\"jmeter.\"), Y/N?");
+		Scanner rootPrefixScanner = new Scanner(System.in);;
 
-		String path = fileScan.nextLine();
+		String rootPrefix = "";
+		boolean isValidOption = false;
+		boolean isValidRootPrefix = false;
+		String rootPrefixOption = "";
+		while(!isValidOption){
+				while ((rootPrefix.isEmpty()) || !isValidRootPrefix){
+					rootPrefixOption = rootPrefixScanner.nextLine();
+					if(rootPrefixOption.toLowerCase().equals("yes") || rootPrefixOption.toLowerCase().equals("y")){
+						rootPrefix= "jmeter.";
+						isValidOption = true;
+						isValidRootPrefix = true;
 
-		System.out.println("Selected Script = " + path);
+					}else if(rootPrefixOption.toLowerCase().equals("no") || rootPrefixOption.toLowerCase().equals("n")){
+						System.out.println("Enter desired rootPrefix value(Note:Special characters are NOT allowed.)");
+						while(!isValidRootPrefix){
+							rootPrefix = rootPrefixScanner.nextLine();
+								if(!rootPrefix.matches("[a-zA-Z0-9]*")){
+									System.out.println("Invalid rootPrefix! Note: Special characters are NOT allowed!");
+									rootPrefix = "";
+									continue;
+								}else{
+									rootPrefix = rootPrefix.toLowerCase();
+									rootPrefix += ".";
+									isValidRootPrefix = true;
+								}
+								isValidOption = true;			
+						}
+					}else{
+						System.out.println("Invalid option! To chose option type: yes/no or y/n.");
+						continue;
+					}
+				}
+		}
+			
+	
+		System.out.println("You selected the following rootPrefix : "+rootPrefix);
+		
+		System.out.println("Selected Script = " + scriptPath);
 		Scanner reader = null;
-		if (path != null) {
+		if (scriptPath != null) {
 			try {
-				reader = new Scanner(new File(path));
+				reader = new Scanner(new File(scriptPath));
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -68,8 +165,8 @@ public class GenerateDashboard {
 		StringBuilder jason = null;
 		jason = new StringBuilder();
 
-		String[] aggregationMetric = { "meanActiveThreads", "percentile90",
-				"failure", "success" };
+		String[] aggregationMetric = { "all.ok.count", "all.ko.count",
+				"all.a.pct90", "test.meanAT" };
 		int iCounter = 0;
 		int idCounter = 88;
 		
@@ -94,7 +191,7 @@ public class GenerateDashboard {
 		jason.append(head);
 		while (iCounter < aggregationMetric.length) {
 			String object = "{\n" + 
-					"          \"title\": \"Total Threads\",\n" + 
+					"          \"title\": \""+rootPrefix+aggregationMetric[iCounter]+"\",\n" + 
 					"          \"error\": false,\n" + 
 					"          \"span\": 6,\n" + 
 					"          \"editable\": true,\n" + 
@@ -146,7 +243,7 @@ public class GenerateDashboard {
 					"              \"function\": \"mean\",\n" + 
 					"              \"column\": \"value\",\n" + 
 					"              \"rawQuery\": true,\n" + 
-					"              \"query\": \"select * from jmeter.cumulated."+aggregationMetric[iCounter]+" where time > now() - 5m\"\n" + 
+					"              \"query\": \"select * from "+rootPrefix+aggregationMetric[iCounter]+" where $timeFilter\"\n" + 
 					"            }\n" + 
 					"          ],\n" + 
 					"          \"aliasColors\": {},\n" + 
@@ -166,6 +263,8 @@ public class GenerateDashboard {
 		jason.append("],\n" + 
 				"      \"showTitle\": true\n" + 
 				"    },\n");
+		
+		String[] individualMetrics = {"a.pct90","ok.count","ko.count"};
 		// display to console
 		for (int i = 0; i < metrics.size(); i++) {
 			columnName = metrics.get(i);
@@ -174,31 +273,31 @@ public class GenerateDashboard {
 			rowName = "\"" + columnName + "\"";
 			jason.append("{ \"title\": ");
 			jason.append(rowName);
-			jason.append(", \"height\": \"250px\", \"editable\": true, \"collapse\": false, \"panels\": [ { \"title\": \"jmeter.");
+			jason.append(", \"height\": \"250px\", \"editable\": true, \"collapse\": false, \"panels\": [ { \"title\": \""+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".percentile90\", \"error\": false, \"span\": 4, \"editable\": true, \"type\": \"graph\", \"id\": ");
+			jason.append("."+individualMetrics[0]+"\", \"error\": false, \"span\": 4, \"editable\": true, \"type\": \"graph\", \"id\": ");
 			jason.append(counter);
-			jason.append(", \"datasource\": null, \"renderer\": \"flot\", \"x-axis\": true, \"y-axis\": true, \"y_formats\": [ \"short\", \"short\" ], \"grid\": { \"leftMax\": null, \"rightMax\": null, \"leftMin\": null, \"rightMin\": null, \"threshold1\": null, \"threshold2\": null, \"threshold1Color\": \"rgba(216, 200, 27, 0.27)\", \"threshold2Color\": \"rgba(234, 112, 112, 0.22)\" }, \"lines\": true, \"fill\": 0, \"linewidth\": 1, \"points\": false, \"pointradius\": 5, \"bars\": false, \"stack\": false, \"percentage\": false, \"legend\": { \"show\": true, \"values\": false, \"min\": false, \"max\": false, \"current\": false, \"total\": false, \"avg\": false }, \"nullPointMode\": \"connected\", \"steppedLine\": false, \"tooltip\": { \"value_type\": \"cumulative\", \"shared\": false }, \"targets\": [ { \"function\": \"mean\", \"column\": \"value\", \"series\": \"jmeter.");
+			jason.append(", \"datasource\": null, \"renderer\": \"flot\", \"x-axis\": true, \"y-axis\": true, \"y_formats\": [ \"short\", \"short\" ], \"grid\": { \"leftMax\": null, \"rightMax\": null, \"leftMin\": null, \"rightMin\": null, \"threshold1\": null, \"threshold2\": null, \"threshold1Color\": \"rgba(216, 200, 27, 0.27)\", \"threshold2Color\": \"rgba(234, 112, 112, 0.22)\" }, \"lines\": true, \"fill\": 0, \"linewidth\": 1, \"points\": false, \"pointradius\": 5, \"bars\": false, \"stack\": false, \"percentage\": false, \"legend\": { \"show\": true, \"values\": false, \"min\": false, \"max\": false, \"current\": false, \"total\": false, \"avg\": false }, \"nullPointMode\": \"connected\", \"steppedLine\": false, \"tooltip\": { \"value_type\": \"cumulative\", \"shared\": false }, \"targets\": [ { \"function\": \"mean\", \"column\": \"value\", \"series\": \""+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".percentile90\", \"query\": \"select * from  jmeter.");
+			jason.append("."+individualMetrics[0]+"\", \"query\": \"select * from  "+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".percentile90 where time > now() - 1h\", \"rawQuery\": true } ], \"aliasColors\": {}, \"seriesOverrides\": [] }, { \"title\": \"jmeter.");
+			jason.append("."+individualMetrics[0]+" where $timeFilter\", \"rawQuery\": true } ], \"aliasColors\": {}, \"seriesOverrides\": [] }, { \"title\": \""+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".success\", \"error\": false, \"span\": 4, \"editable\": true, \"type\": \"graph\", \"id\": ");
+			jason.append("."+individualMetrics[1]+"\", \"error\": false, \"span\": 4, \"editable\": true, \"type\": \"graph\", \"id\": ");
 			jason.append(counter2);
-			jason.append(", \"datasource\": null, \"renderer\": \"flot\", \"x-axis\": true, \"y-axis\": true, \"y_formats\": [ \"short\", \"short\" ], \"grid\": { \"leftMax\": null, \"rightMax\": null, \"leftMin\": null, \"rightMin\": null, \"threshold1\": null, \"threshold2\": null, \"threshold1Color\": \"rgba(216, 200, 27, 0.27)\", \"threshold2Color\": \"rgba(234, 112, 112, 0.22)\" }, \"lines\": true, \"fill\": 0, \"linewidth\": 1, \"points\": false, \"pointradius\": 5, \"bars\": false, \"stack\": false, \"percentage\": false, \"legend\": { \"show\": true, \"values\": false, \"min\": false, \"max\": false, \"current\": false, \"total\": false, \"avg\": false }, \"nullPointMode\": \"connected\", \"steppedLine\": false, \"tooltip\": { \"value_type\": \"cumulative\", \"shared\": false }, \"targets\": [ { \"function\": \"mean\", \"column\": \"value\", \"series\": \"jmeter.");
+			jason.append(", \"datasource\": null, \"renderer\": \"flot\", \"x-axis\": true, \"y-axis\": true, \"y_formats\": [ \"short\", \"short\" ], \"grid\": { \"leftMax\": null, \"rightMax\": null, \"leftMin\": null, \"rightMin\": null, \"threshold1\": null, \"threshold2\": null, \"threshold1Color\": \"rgba(216, 200, 27, 0.27)\", \"threshold2Color\": \"rgba(234, 112, 112, 0.22)\" }, \"lines\": true, \"fill\": 0, \"linewidth\": 1, \"points\": false, \"pointradius\": 5, \"bars\": false, \"stack\": false, \"percentage\": false, \"legend\": { \"show\": true, \"values\": false, \"min\": false, \"max\": false, \"current\": false, \"total\": false, \"avg\": false }, \"nullPointMode\": \"connected\", \"steppedLine\": false, \"tooltip\": { \"value_type\": \"cumulative\", \"shared\": false }, \"targets\": [ { \"function\": \"mean\", \"column\": \"value\", \"series\": \""+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".success\", \"query\": \"select * from  jmeter.");
+			jason.append("."+individualMetrics[1]+"\", \"query\": \"select * from  "+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".success where time > now() - 1h\", \"rawQuery\": true } ], \"aliasColors\": {}, \"seriesOverrides\": [] }, { \"title\": \"jmeter.");
+			jason.append("."+individualMetrics[1]+" where $timeFilter\", \"rawQuery\": true } ], \"aliasColors\": {}, \"seriesOverrides\": [] }, { \"title\": \""+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".failure\", \"error\": false, \"span\": 4, \"editable\": true, \"type\": \"graph\", \"id\": ");
+			jason.append("."+individualMetrics[2]+"\", \"error\": false, \"span\": 4, \"editable\": true, \"type\": \"graph\", \"id\": ");
 			jason.append(counter3);
-			jason.append(", \"datasource\": null, \"renderer\": \"flot\", \"x-axis\": true, \"y-axis\": true, \"y_formats\": [ \"short\", \"short\" ], \"grid\": { \"leftMax\": null, \"rightMax\": null, \"leftMin\": null, \"rightMin\": null, \"threshold1\": null, \"threshold2\": null, \"threshold1Color\": \"rgba(216, 200, 27, 0.27)\", \"threshold2Color\": \"rgba(234, 112, 112, 0.22)\" }, \"lines\": true, \"fill\": 0, \"linewidth\": 1, \"points\": false, \"pointradius\": 5, \"bars\": false, \"stack\": false, \"percentage\": false, \"legend\": { \"show\": true, \"values\": false, \"min\": false, \"max\": false, \"current\": false, \"total\": false, \"avg\": false }, \"nullPointMode\": \"connected\", \"steppedLine\": false, \"tooltip\": { \"value_type\": \"cumulative\", \"shared\": false }, \"targets\": [ { \"function\": \"mean\", \"column\": \"value\", \"series\": \"jmeter.");
+			jason.append(", \"datasource\": null, \"renderer\": \"flot\", \"x-axis\": true, \"y-axis\": true, \"y_formats\": [ \"short\", \"short\" ], \"grid\": { \"leftMax\": null, \"rightMax\": null, \"leftMin\": null, \"rightMin\": null, \"threshold1\": null, \"threshold2\": null, \"threshold1Color\": \"rgba(216, 200, 27, 0.27)\", \"threshold2Color\": \"rgba(234, 112, 112, 0.22)\" }, \"lines\": true, \"fill\": 0, \"linewidth\": 1, \"points\": false, \"pointradius\": 5, \"bars\": false, \"stack\": false, \"percentage\": false, \"legend\": { \"show\": true, \"values\": false, \"min\": false, \"max\": false, \"current\": false, \"total\": false, \"avg\": false }, \"nullPointMode\": \"connected\", \"steppedLine\": false, \"tooltip\": { \"value_type\": \"cumulative\", \"shared\": false }, \"targets\": [ { \"function\": \"mean\", \"column\": \"value\", \"series\": \""+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".percentile90\", \"query\": \"select * from  jmeter.");
+			jason.append("."+individualMetrics[2]+"\", \"query\": \"select * from  "+rootPrefix+"");
 			jason.append(columnName);
-			jason.append(".failure where time > now() - 1h\", \"rawQuery\": true } ], \"aliasColors\": {}, \"seriesOverrides\": [] } ");
+			jason.append("."+individualMetrics[2]+" where $timeFilter\", \"rawQuery\": true } ], \"aliasColors\": {}, \"seriesOverrides\": [] } ");
 			jason.append("      ]\n" + 
 					"    }");
 			int isLastNode = i + 1;
@@ -276,7 +375,7 @@ public class GenerateDashboard {
 			writer = new PrintWriter(outputFile, "UTF-8");
 			writer.println(jason);
 			writer.close();
-			System.out.println("Dashboard file successfully generated "
+			System.out.println("Dashboard file was successfully generated : "
 					+ outputFile);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -289,7 +388,8 @@ public class GenerateDashboard {
 			outputFilePathScanner.close();
 			outputFileNameScanner.close();
 			reader.close();
-			fileScan.close();
+			scriptFileScanner.close();
+			rootPrefixScanner.close();
 
 		}
 
